@@ -1,4 +1,6 @@
 # 构建产物
+# 注：bin/ obj/ 故意**不加**前导斜杠 —— 它们是 client/PlanWidget/ 下的子目录，
+#     加 "/" 会限定到仓库根而漏掉构建产物；这两个名字与源码目录不冲突。
 bin/
 obj/
 
@@ -6,10 +8,14 @@ obj/
 node_modules/
 
 # 运行时 / 用户数据（不入库）
+# ⚠️ 目录规则加前导斜杠：无前导斜杠会匹配**任意层级**，
+#    而 Windows 上 git 默认 core.ignorecase=true → "data/" 会误伤源码目录 client/PlanWidget/Data/
+#    （2026-09-10 实测：git check-ignore -v → .gitignore:12:data/ 命中 FileSources.cs / DataContracts.cs，
+#     导致 git add -A 只入库 44/46，靠 git add -f 才补齐）。故此处限定为仓库根。
+/data/
 config.json
 local-progress.json
 .plan-widget/
-data/
 
 # 开发备份
 *.bak
@@ -19,3 +25,22 @@ data/
 .vs/
 .idea/
 *.user
+
+# ── 内部协作文档与本地产物（严禁进公开仓库）───────────────────────────────
+# 2026-09-10 加固：本包已剔除这些文件，但再打包 / 本地发布时可能被带进来，
+# 故按「通配 + 目录斜杠」写法兜住（同日 vision-exp-tile 发布实测：AGENTS.md 与会话恢复快照.md
+# 当时**未被忽略**，靠人工精确暂存才没外泄 —— 人工不是保障，规则才是）。
+# 注：.gitignore 只对【未追踪】文件生效；已被追踪的需 git rm --cached 之后才不再上传。
+AGENTS.md
+会话恢复快照*.md
+状态快照*.md
+踩坑记录*.md
+发布包/
+发布指引/
+发布说明/
+发布总结*.md
+发布中转/
+证据/
+证据素材/
+*_工作副本/
+_工作副本/
