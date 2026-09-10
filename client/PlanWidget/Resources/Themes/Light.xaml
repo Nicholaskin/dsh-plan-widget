@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 浅色主题配色（供 DynamicResource 引用，切换主题时换肤） -->
+    <SolidColorBrush x:Key="WindowBgBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="CardBgBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#4A6CF7"/>
+    <SolidColorBrush x:Key="AccentLightBrush" Color="#EEF2FF"/>
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1F2937"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#6B7280"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#9CA3AF"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#E5E7EB"/>
+    <SolidColorBrush x:Key="MutedBrush" Color="#F3F4F6"/>
+    <SolidColorBrush x:Key="BadgeBgBrush" Color="#E5E7EB"/>
+    <SolidColorBrush x:Key="StatusBgBrush" Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="WarnBgBrush" Color="#FEF3C7"/>
+    <SolidColorBrush x:Key="WarnBorderBrush" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="WarnTextBrush" Color="#92400E"/>
+    <SolidColorBrush x:Key="BtnHoverBrush" Color="#E3E8F7"/>
+    <SolidColorBrush x:Key="CloseHoverBrush" Color="#EF4444"/>
+</ResourceDictionary>

@@ -1,0 +1,4 @@
+### dsh-plan-widget — bundle patch: insert the plugin row.
+- insert:
+    - id: dsh-plan-widget
+      name: 'dsh-plan-widget'

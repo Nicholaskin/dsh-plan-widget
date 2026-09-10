@@ -1,0 +1,613 @@
+<Window x:Class="PlanWidget.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:r="clr-namespace:PlanWidget.Rendering"
+        mc:Ignorable="d"
+        Title="计划悬浮窗"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        Width="720" Height="600"
+        MinWidth="560" MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="True"
+        Loaded="Window_Loaded"
+        Closing="Window_Closing"
+        MouseEnter="Window_MouseEnter"
+        MouseLeave="Window_MouseLeave">
+
+    <Window.Resources>
+        <Style x:Key="HeaderPill" TargetType="Button">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="6,0"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AccentLightBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                CornerRadius="12" Padding="{TemplateBinding Padding}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource BtnHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderClose" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" CornerRadius="14">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource CloseHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 强调按钮（“完成”当前任务） -->
+        <Style x:Key="AccentBtn" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="9,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" CornerRadius="8" Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.88"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TabRadio" TargetType="RadioButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="bd" CornerRadius="14" Padding="12,6" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource MutedBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentLightBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="StageBanner" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource AccentLightBrush}"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="2,4,0,2"/>
+        </Style>
+
+        <DataTemplate x:Key="TaskCardTemplate">
+            <Border CornerRadius="10" Margin="0,6" Padding="12,10" BorderThickness="1" MinHeight="56">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource CardBgBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding State}" Value="Current">
+                                <Setter Property="Background" Value="{DynamicResource AccentLightBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="Done">
+                                <Setter Property="Opacity" Value="0.55"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="Pending">
+                                <Setter Property="Opacity" Value="0.72"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="24" Height="24" CornerRadius="12" Background="{DynamicResource BadgeBgBrush}"
+                            VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock Text="{Binding StateGlyph}" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" FontSize="13.5"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding TimeRange}" FontSize="11"
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="6,0,0,0">
+                        <TextBlock Text="{Binding StateLabel}" FontSize="10.5"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Right"/>
+                        <Button Content="✓ 完成" Click="CompleteTask_Click"
+                                Style="{StaticResource AccentBtn}"
+                                Visibility="{Binding CompleteVisibility}"
+                                IsEnabled="{Binding CanComplete}"
+                                HorizontalAlignment="Right" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        
+
+
+        <DataTemplate x:Key="TimeSlotTemplate">
+            <Border CornerRadius="10" Padding="10,6" Margin="0,0,8,0" BorderThickness="1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource CardBgBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                        <Setter Property="Opacity" Value="0.8"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="Opacity" Value="1"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Text="{Binding TimeRange}" FontSize="10.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource AccentLightBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="Bold" Margin="0,1,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="MilestoneTemplate">
+            <Border CornerRadius="10" Margin="0,6" Padding="12,10" BorderThickness="1" MinHeight="52">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource CardBgBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding State}" Value="Current">
+                                <Setter Property="Background" Value="{DynamicResource AccentLightBrush}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="Done">
+                                <Setter Property="Opacity" Value="0.55"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="Pending">
+                                <Setter Property="Opacity" Value="0.72"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="24" Height="24" CornerRadius="12" Background="{DynamicResource BadgeBgBrush}"
+                            VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock Text="{Binding StateGlyph}" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="13"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding DateText}" FontSize="11"
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"/>
+                        <TextBlock Text="{Binding Detail}" FontSize="11"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+<!-- 周/总览 分组标题模板 -->
+        <DataTemplate x:Key="GroupHeaderTemplate">
+            <TextBlock Text="{Binding Heading}" FontSize="12" FontWeight="Bold"
+                       Foreground="{DynamicResource AccentBrush}" Margin="0,8,0,2"/>
+        </DataTemplate>
+
+        <!-- 周/总览 分组列表模板选择器（GroupHeader/TaskCard） -->
+        <r:WeekListSelector x:Key="WeekListSelector"
+            GroupHeader="{StaticResource GroupHeaderTemplate}"
+            TaskCard="{StaticResource TaskCardTemplate}"
+            Milestone="{StaticResource MilestoneTemplate}"/>
+
+    </Window.Resources>
+
+    <Grid Margin="10" MouseLeftButtonDown="Root_MouseLeftButtonDown">
+        <Border CornerRadius="16" Background="{DynamicResource WindowBgBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect Color="#40000000" BlurRadius="18" ShadowDepth="4" Opacity="0.22"/>
+            </Border.Effect>
+            <Grid>
+                <Grid x:Name="ContentHost">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid x:Name="HeaderArea" Grid.Row="0" Height="46" Margin="16,10,10,0" MouseLeftButtonDown="HeaderArea_MouseLeftButtonDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="计划悬浮窗" VerticalAlignment="Center" FontSize="17"
+                               FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <Button x:Name="LayerBtn" Grid.Column="1" Content="正常" Click="LayerButton_Click"
+                            Style="{StaticResource HeaderPill}"/>
+                    <Button x:Name="SessionToggleBtn" Grid.Column="2" Content="会话" Click="SessionToggle_Click"
+                            Style="{StaticResource HeaderPill}"/>
+                    <Button x:Name="SettingsBtn" Grid.Column="3" Content="设置" Click="Settings_Click"
+                            Style="{StaticResource HeaderPill}"/>
+                    <Button x:Name="CloseBtn" Grid.Column="4" Content="&#x2715;" Click="CloseButton_Click"
+                            Style="{StaticResource HeaderClose}"/>
+                </Grid>
+
+                <Border x:Name="WarnBanner" Grid.Row="1" Visibility="Collapsed" Margin="16,0,16,8"
+                        CornerRadius="10" Padding="10,7" Background="{DynamicResource WarnBgBrush}"
+                        BorderBrush="{DynamicResource WarnBorderBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="WarnText" FontSize="11.5"
+                                   Foreground="{DynamicResource WarnTextBrush}" VerticalAlignment="Center"
+                                   TextWrapping="Wrap"/>
+                        <Button x:Name="WarnSetBtn" Grid.Column="1" Content="打开设置" Margin="8,0,0,0"
+                                Click="WarnSet_Click" Foreground="{DynamicResource WarnTextBrush}"
+                                FontSize="11" Cursor="Hand" Background="Transparent" BorderThickness="0"/>
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="16,6,16,4">
+                    <RadioButton x:Name="TabToday" Content="今日" GroupName="tabs" Checked="Tab_Checked" Tag="0"
+                                 Style="{StaticResource TabRadio}"/>
+                    <RadioButton x:Name="TabWeek" Content="本周" GroupName="tabs" Checked="Tab_Checked" Tag="1"
+                                 Style="{StaticResource TabRadio}"/>
+                    <RadioButton x:Name="TabOverview" Content="总览" GroupName="tabs" Checked="Tab_Checked" Tag="2"
+                                 Style="{StaticResource TabRadio}"/>
+                    <RadioButton x:Name="TabTodo" Content="待办" GroupName="tabs" Checked="Tab_Checked" Tag="3"
+                                 Style="{StaticResource TabRadio}"/>
+                </StackPanel>
+
+                <Grid Grid.Row="3" Margin="16,0,16,10">
+                    <!-- ===== 双栏: 左=用户计划, 右=Agent 计划 ===== -->
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                    <!-- 今日 -->
+                    <Grid x:Name="PanelToday" Visibility="Visible">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Style="{StaticResource StageBanner}">
+                            <TextBlock x:Name="TodayStageText" FontSize="12.5" FontWeight="Bold"
+                                       Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap"/>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Disabled" Margin="0,0,0,4">
+                            <ItemsControl x:Name="TodaySlots">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <StaticResource ResourceKey="TimeSlotTemplate"/>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Text="今日目标" Style="{StaticResource SectionTitle}"/>
+                            <ItemsControl x:Name="TodayGoals">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="6" Margin="0,3" Padding="8,5"
+                                                Background="{DynamicResource MutedBrush}">
+                                            <TextBlock Text="{Binding}" FontSize="11.5"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="TodayTasks">
+                                <ItemsControl.ItemTemplate>
+                                    <StaticResource ResourceKey="TaskCardTemplate"/>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- 本周 -->
+                    <Grid x:Name="PanelWeek" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Style="{StaticResource StageBanner}">
+                            <StackPanel>
+                                <TextBlock x:Name="WeekTitleText" FontSize="13" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <TextBlock x:Name="WeekStageText" FontSize="12" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="WeekFileText" FontSize="10.5" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="WeekTasks" ItemTemplateSelector="{StaticResource WeekListSelector}"/>
+                        </ScrollViewer>
+                    </Grid>
+
+                    </Grid> <!-- /左栏(用户计划) -->
+
+                    <!-- ===== 右栏: Agent 计划(任务看板同步) ===== -->
+                    <Grid Grid.Column="1" Margin="12,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Agent 计划" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock x:Name="AgentMetaText" Grid.Row="1" FontSize="10.5"
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,6"/>
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="AgentTasks">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="8" Margin="0,4" Padding="10,7"
+                                                Background="{DynamicResource CardBgBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="12" Height="12" CornerRadius="6"
+                                                        Background="{Binding ZoneBrush}"
+                                                        VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" FontSize="12.5"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding TimeLabel}" FontSize="10.5"
+                                                               Foreground="{DynamicResource TextMutedBrush}"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding StatusLabel}" FontSize="10.5"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- 总览 -->
+                    <Grid x:Name="PanelOverview" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Style="{StaticResource StageBanner}">
+                            <StackPanel>
+                                <TextBlock x:Name="OverviewStageText" FontSize="12.5" FontWeight="Bold"
+                                           Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="OverviewFileText" FontSize="10.5" Margin="0,2,0,0"
+                                           Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="MilestoneList" ItemTemplateSelector="{StaticResource WeekListSelector}"/>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- 待办 -->
+                    <Grid x:Name="PanelTodo" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <TextBlock Text="今日待办" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="TodoSummary" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                       FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Grid>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="TodoList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="8" Margin="0,4" Padding="10,8"
+                                                Background="{DynamicResource CardBgBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                          VerticalAlignment="Center" Cursor="Hand"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center"
+                                                           Margin="8,0,0,0" FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           TextWrapping="Wrap">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsChecked}" Value="True">
+                                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+
+                <Border x:Name="SessionPanel" Grid.Row="4" Visibility="Collapsed"
+                        Background="{DynamicResource StatusBgBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,16,16" Padding="16,10">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="主会话状态" FontSize="11" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock x:Name="PortText" HorizontalAlignment="Right" FontSize="11"
+                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <Ellipse x:Name="SessionDot" Width="10" Height="10" VerticalAlignment="Center"
+                                     Fill="#9CA3AF"/>
+                            <TextBlock x:Name="SessionText" Text="空闲" FontSize="13" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,0,0,0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock x:Name="LatestText" Text="" FontSize="11.5"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,0"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock x:Name="SinceText" Text="" FontSize="10.5"
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </Border>
+                </Grid>
+
+                <!-- 非阻塞提示（Toast）：写共享失败等提示 -->
+                <Border x:Name="ToastOverlay" Visibility="Collapsed"
+                        VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,0,0"
+                        CornerRadius="10" Padding="12,7"
+                        Background="{DynamicResource WarnBgBrush}"
+                        BorderBrush="{DynamicResource WarnBorderBrush}" BorderThickness="1"
+                        Panel.ZIndex="10">
+                    <TextBlock x:Name="ToastText" Text="" FontSize="11.5"
+                               Foreground="{DynamicResource WarnTextBrush}" TextWrapping="Wrap"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- 右下角 resize 把手：拖动调整悬浮窗尺寸；最小=MinWidth/MinHeight，
+             最大=当前屏幕工作区-48px；配合 SnapDockSnapper 边缘碰撞钳制，尺寸/位置都不会出屏 -->
+        <Thumb x:Name="ResizeGrip" Width="18" Height="18" HorizontalAlignment="Right"
+               VerticalAlignment="Bottom" Margin="0,0,4,4" Cursor="SizeNWSE"
+               Background="Transparent" DragDelta="ResizeGrip_DragDelta">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid Background="Transparent">
+                        <Path Data="M 3,15 L 15,3 M 8,15 L 15,8 M 13,15 L 15,13"
+                              Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.6"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    </Grid>
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+    </Grid>
+</Window>

@@ -1,0 +1,21 @@
+# 构建产物
+bin/
+obj/
+
+# 依赖
+node_modules/
+
+# 运行时 / 用户数据（不入库）
+config.json
+local-progress.json
+.plan-widget/
+data/
+
+# 开发备份
+*.bak
+*.bak-*
+
+# 编辑器 / IDE
+.vs/
+.idea/
+*.user
